@@ -47,9 +47,16 @@ class CreateHosting
 		}
 
 		echo 'Save these details!' . "\r\n\r\n";
-		echo 'Production' . "\r\n";
+
+		echo 'Server' . "\r\n";
+		echo 'Server name: ' . $this->server->name . "\r\n";
+		echo 'Server IP: ' . $this->server->lastaddress . "\r\n";
+
+		echo "\r\n" . 'User' . "\r\n";
 		echo 'Username: ' . $this->user->data->name . "\r\n";
 		echo 'Password: ' . $this->password . "\r\n";
+
+		echo "\r\n" . 'Production' . "\r\n";
 		echo 'App name: ' . $this->app->data->name . "\r\n";
 		echo 'Runtime: ' . $this->app->data->runtime . "\r\n";
 		echo 'Domains: ' . implode(', ', $this->app->data->domains) . "\r\n";
