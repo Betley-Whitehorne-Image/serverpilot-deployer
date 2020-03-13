@@ -18,8 +18,10 @@ class CreateHosting
 	private $app;
 	private $password;
 	private $user;
+	private $staging;
+	private $stagingApp;
 
-	public function __construct($serverName, $domain)
+	public function __construct($serverName, $domain, $staging)
 	{
 		$this->serverPilot = new \ServerPilot([
 			'id' => config('serverpilot-deployer.serverpilot_client'),
@@ -28,6 +30,7 @@ class CreateHosting
 
 		$this->serverName = $serverName;
 		$this->domain = $domain;
+		$this->staging = $staging;
 	}
 
 	public function setupApp() {
@@ -39,17 +42,31 @@ class CreateHosting
 
 		$this->createApp();
 
-		echo 'Save these details!' . "\r\n";
+		if ($this->staging) {
+			$this->createStagingApp();
+		}
+
+		echo 'Save these details!' . "\r\n\r\n";
+		echo 'Production' . "\r\n";
 		echo 'Username: ' . $this->user->data->name . "\r\n";
 		echo 'Password: ' . $this->password . "\r\n";
 		echo 'App name: ' . $this->app->data->name . "\r\n";
 		echo 'Runtime: ' . $this->app->data->runtime . "\r\n";
 		echo 'Domains: ' . implode(', ', $this->app->data->domains) . "\r\n";
+
+		if ($this->staging) {
+			echo "\r\n" . 'Staging' . "\r\n";
+			echo 'Staging app name: ' . $this->stagingApp->data->name . "\r\n";
+			echo 'Runtime: ' . $this->stagingApp->data->runtime . "\r\n";
+			echo 'Domains: ' . implode(', ', $this->stagingApp->data->domains) . "\r\n";
+		}
 	}
 
 	private function getServer() {
 		try {
 			$servers = $this->serverPilot->server_list();
+
+			dd($servers);
 
 			return current(array_filter($servers->data, function ($server) {
 				return $server->name === $this->serverName;
@@ -66,7 +83,7 @@ class CreateHosting
 		try {
 			$this->user = $this->serverPilot->sysuser_create($this->server->id, $username, $this->password);
 		} catch(ServerPilotException $e) {
-			echo $e->getCode() . ': ' .$e->getMessage();
+			exit($e->getCode() . ': ' .$e->getMessage());
 		}
 	}
 
@@ -79,7 +96,19 @@ class CreateHosting
 				'www.' . $this->domain,
 			]);
 		} catch(ServerPilotException $e) {
-			echo $e->getCode() . ': ' .$e->getMessage();
+			exit($e->getCode() . ': ' .$e->getMessage());
+		}
+	}
+
+	private function createStagingApp() {
+		$appName = $this->serverPilotFriendlyName('' . $this->domain, 22) . '-staging';
+
+		try {
+			$this->stagingApp = $this->serverPilot->app_create($appName, $this->user->data->id, config('serverpilot-deployer.php_version'), [
+				'staging.' . $this->domain,
+			]);
+		} catch(ServerPilotException $e) {
+			exit($e->getCode() . ': ' .$e->getMessage());
 		}
 	}
 

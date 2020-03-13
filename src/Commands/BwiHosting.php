@@ -12,7 +12,7 @@ class BwiHosting extends Command
      *
      * @var string
      */
-    protected $signature = 'bwi:hosting {server_name} {domain}';
+    protected $signature = 'bwi:hosting {server_name} {domain} {--staging}';
 
     /**
      * The console command description.
@@ -38,7 +38,7 @@ class BwiHosting extends Command
      */
     public function handle()
     {
-        $createHosting = new CreateHosting($this->argument('server_name'), $this->argument('domain'));
+        $createHosting = new CreateHosting($this->argument('server_name'), $this->argument('domain'), $this->option('staging'));
         $createHosting->setupApp();
     }
 }
