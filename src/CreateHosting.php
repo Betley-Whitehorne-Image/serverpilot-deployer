@@ -66,8 +66,6 @@ class CreateHosting
 		try {
 			$servers = $this->serverPilot->server_list();
 
-			dd($servers);
-
 			return current(array_filter($servers->data, function ($server) {
 				return $server->name === $this->serverName;
 			}));
