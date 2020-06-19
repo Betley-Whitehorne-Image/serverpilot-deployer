@@ -1,53 +1,68 @@
-# Very short description of the package
+### Set up
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/riclep/serverpilot-deployer.svg?style=flat-square)](https://packagist.org/packages/riclep/serverpilot-deployer)
-[![Build Status](https://img.shields.io/travis/riclep/serverpilot-deployer/master.svg?style=flat-square)](https://travis-ci.org/riclep/serverpilot-deployer)
-[![Quality Score](https://img.shields.io/scrutinizer/g/riclep/serverpilot-deployer.svg?style=flat-square)](https://scrutinizer-ci.com/g/riclep/serverpilot-deployer)
-[![Total Downloads](https://img.shields.io/packagist/dt/riclep/serverpilot-deployer.svg?style=flat-square)](https://packagist.org/packages/riclep/serverpilot-deployer)
+Make a new folder and run
 
-This is where your description should go. Try and limit it to a paragraph or two, and maybe throw in a mention of what PSRs you support to avoid any confusion with users and contributors.
+```
+lando init
 
-## Installation
+lando composer global require hirak/prestissimo
 
-You can install the package via composer:
+lando composer global require sllh/composer-versions-check
 
-```bash
-composer require riclep/serverpilot-deployer
+lando composer global require pyrech/composer-changelogs
+
+// TODO https://github.com/franzliedke/studio -- package development
+
+lando composer create-project --prefer-dist laravel/laravel
 ```
 
-## Usage
+Move install files from /laravel to root
 
-``` php
-// Usage description here
+### git
+`git init`
+
+### Push to Bitbucket
+Create repo on Bitbucket matching primary domain - somewebsite.com
+
+```
+git remote add origin https://bitbucket.org/betleywhitehorneimage/<reponame>.git
+git push -u origin --all
 ```
 
-### Testing
+### Pull down deployer bits
 
-``` bash
-composer test
+Add repository to composer.json
+
+```
+"repositories":[
+	{
+		"type": "vcs",
+		"url" : "git@bitbucket.org:betleywhitehorneimage/serverpilot-deployer.git"
+	}
+],
 ```
 
-### Changelog
+Install packages as dev dependencies
 
-Please see [CHANGELOG](CHANGELOG.md) for more information what has changed recently.
+```
+lando composer require lorisleiva/laravel-deployer --dev
+lando composer require riclep/serverpilot-deployer --dev
+```
 
-## Contributing
+### update .env file
 
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
+```apacheconfig
+SERVERPILOT_CLIENT=
+#SERVERPILOT_API_KEY=
+```
 
-### Security
+Run command to make hosting - pass `--deployer` to create deployer config
 
-If you discover any security related issues, please email ric@wearebwi.com instead of using the issue tracker.
+```apacheconfig
+lando artisan bwi:hosting {server_name} {domain} {--deployer}
+// lando artisan bwi:hosting bwi-3 website.com --deployer
+```
 
-## Credits
+### Troubleshooting
 
-- [Richard Le Poidevin](https://github.com/riclep)
-- [All Contributors](../../contributors)
-
-## License
-
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
-
-## Laravel Package Boilerplate
-
-This package was generated using the [Laravel Package Boilerplate](https://laravelpackageboilerplate.com).
+500 error. the env file is missing or is cached. Upload and run artisan `config:cache to update` in ‘current’ folder
