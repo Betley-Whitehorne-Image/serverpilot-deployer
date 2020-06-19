@@ -3,7 +3,8 @@
 
 namespace Riclep\ServerpilotDeployer;
 
-
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 use ServerPilotException;
 
@@ -14,6 +15,7 @@ class CreateHosting
 	 */
 	private $serverPilot;
 	private $serverName;
+	private $deployment;
 	private $domain;
 	private $app;
 	private $password;
@@ -21,7 +23,7 @@ class CreateHosting
 	private $staging;
 	private $stagingApp;
 
-	public function __construct($serverName, $domain, $staging)
+	public function __construct($serverName, $domain, $deployment, $staging)
 	{
 		$this->serverPilot = new \ServerPilot([
 			'id' => config('serverpilot-deployer.serverpilot_client'),
@@ -30,6 +32,7 @@ class CreateHosting
 
 		$this->serverName = $serverName;
 		$this->domain = $domain;
+		$this->deployment = $deployment;
 		$this->staging = $staging;
 	}
 
@@ -45,6 +48,12 @@ class CreateHosting
 		if ($this->staging) {
 			$this->createStagingApp();
 		}
+
+		if ($this->deployment) {
+			$this->createDeployment();
+		}
+
+		echo 'Generate deployer script' . "\r\n\r\n";
 
 		echo 'Save these details!' . "\r\n\r\n";
 
@@ -144,5 +153,74 @@ class CreateHosting
 
 	private function removeStartingNumbers($string) {
 		return ltrim($string, '0..9');
+	}
+
+	private function createDeployment() {
+		if (!file_exists(config_path('deploy.php'))) {
+			Artisan::call('deploy:init ' . $this->server->lastaddress . ' -a');
+
+			$configFile = config_path('deploy.php');
+
+			$config = File::get($configFile);
+
+			$config = str_replace([
+				"'deploy_path' => '/var/www/" . $this->server->lastaddress . "'",
+				"'user' => 'root'",
+				"'https://bitbucket.org",
+				//"include"
+				"'npm:install',",
+				"'npm:production',",
+				"'artisan:migrate',",
+				"'artisan:horizon:terminate',",
+				"'fpm:reload',",
+			], [
+				"'deploy_path' => '/srv/users/" . $this->user->data->name . "/deployments/" . $this->app->data->name . "'",
+				"'user' => '" . $this->user->data->name . "'",
+				"'https://'  . env('BITBUCKET') . '",
+				//"'vendor/riclep/serverpilot-deployer/recipe/deploy-recipe.php'",
+				"", // remove fpm:reload
+				"", // remove artisan:horizon:terminate
+				"", // remove artisan:migrate
+				"", // remove npm:production
+				"", // remove npm:install
+			], $config);
+
+			$config = preg_replace([
+				"/(success'[^\\n\\r]+\s+)(\/\/)/",
+				"/(include'[^\\n\\r]+\s+)(\/\/)/",
+			], [
+				"$1'serverpilot:symlink_public',",
+				"$1'vendor/riclep/serverpilot-deployer/recipe/deploy-recipe.php',",
+			],  $config);
+
+			File::put($configFile, $config);
+
+			/*
+			desc('Make symlink for public to current');
+			task('serverpilot:symlink_public', function () {
+				$deployPath = get('deploy_path');
+				$publicPath = str_replace('deployments', 'apps', $deployPath) . '/public';
+
+				run('rm ' . $publicPath . ' -rf');
+				run('ln -s ' . $deployPath . '/current/public ' . $publicPath);
+			});
+*/
+
+			// TODO
+			/*
+			 * this fails - wrong user
+			  The command "echo "" | sudo -S /usr/sbin/service php7.3-fpm reload" failed.
+
+  Exit Code: 1 (General error)
+
+  Host Name: 167.99.207.229
+
+  ================
+  [sudo] password for deploy6-com: Sorry, try again.
+  [sudo] password for deploy6-com:
+  sudo: no password was provided
+  sudo: 1 incorrect password attempt
+			 * */
+		}
 	}
 }
