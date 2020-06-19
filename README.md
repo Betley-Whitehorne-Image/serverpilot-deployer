@@ -54,6 +54,7 @@ lando composer require riclep/serverpilot-deployer --dev
 ```apacheconfig
 SERVERPILOT_CLIENT=
 #SERVERPILOT_API_KEY=
+BITBUCKET=  // <username>:<password>@bitbucket.org
 ```
 
 Run command to make hosting - pass `--deployer` to create deployer config
