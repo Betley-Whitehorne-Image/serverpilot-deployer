@@ -21,5 +21,5 @@ task('serverpilot:symlink_public', function () {
 	run('rm ' . $publicPath . ' -rf');
 	run('ln -s ' . $deployPath . '/current/public ' . $publicPath);
 
-	writeln("Donâ€™t forget changes to the .env file!");
+	writeln("Don’t forget changes to the .env file and restarting queues!");
 });
